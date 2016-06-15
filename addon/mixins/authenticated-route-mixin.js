@@ -1,5 +1,4 @@
 import Ember from 'ember';
-import getOwner from 'ember-getowner-polyfill';
 import Configuration from './../configuration';
 
 const { inject: { service }, computed } = Ember;
@@ -34,12 +33,6 @@ export default Ember.Mixin.create({
   */
   session: service('session'),
 
-  _isFastBoot: computed(function() {
-    const fastboot = getOwner(this).lookup('service:fastboot');
-
-    return fastboot ? fastboot.get('isFastBoot') : false;
-  }),
-
   /**
     Checks whether the session is authenticated and if it is not aborts the
     current transition and instead transitions to the
@@ -59,14 +52,9 @@ export default Ember.Mixin.create({
     @param {Transition} transition The transition that lead to this route
     @public
   */
-  beforeModel(transition) {
+  beforeModel() {
     if (!this.get('session.isAuthenticated')) {
       Ember.assert('The route configured as Configuration.authenticationRoute cannot implement the AuthenticatedRouteMixin mixin as that leads to an infinite transitioning loop!', this.get('routeName') !== Configuration.authenticationRoute);
-
-      if (!this.get('_isFastBoot')) {
-        transition.abort();
-        this.set('session.attemptedTransition', transition);
-      }
       this.transitionTo(Configuration.authenticationRoute);
     } else {
       return this._super(...arguments);
